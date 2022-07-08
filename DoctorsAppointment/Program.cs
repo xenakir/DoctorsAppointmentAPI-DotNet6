@@ -6,7 +6,6 @@ global using Microsoft.EntityFrameworkCore;
 global using System.Data.Entity.Spatial;
 global using DoctorsAppointment.Service;
 global using DoctorsAppointment.IService;
-//using Microsoft.AspNetCore.Mvc.NewtonsoftJson;
 
 var builder = WebApplication.CreateBuilder(args);
 
