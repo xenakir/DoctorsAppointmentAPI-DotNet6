@@ -4,7 +4,6 @@ global using DoctorsAppointment.Models.DtoModels;
 global using DoctorsAppointment.Data;
 global using Microsoft.EntityFrameworkCore;
 global using System.Data.Entity.Spatial;
-//using Microsoft.AspNetCore.Mvc.NewtonsoftJson;
 
 var builder = WebApplication.CreateBuilder(args);
 
