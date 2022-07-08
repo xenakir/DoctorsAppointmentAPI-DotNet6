@@ -3,7 +3,6 @@ global using DoctorsAppointment.Models.GetModels;
 global using DoctorsAppointment.Models.DtoModels;
 global using DoctorsAppointment.Data;
 global using Microsoft.EntityFrameworkCore;
-global using System.Data.Entity.Spatial;
 global using DoctorsAppointment.Service;
 global using DoctorsAppointment.IService;
 
@@ -11,8 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 
 builder.Services.AddControllers().AddNewtonsoftJson(options =>
-    options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
-);
+    options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
 
 // Add services to the container.
 
