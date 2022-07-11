@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace DoctorsAppointment.Service
+﻿namespace DoctorsAppointment.Service
 {
     public class DoctorService : ControllerBase, IDoctorService
     {
@@ -14,204 +8,247 @@ namespace DoctorsAppointment.Service
         {
             _context = context;
         }
-
-        public async Task<ActionResult<List<GetDoctorModel>>> GetDoctors()
+        public List<Doctor> GetDoctors()
         {
-            var doctors = new List<GetDoctorModel>();
-            var dbDoctors = await _context.Doctors.ToListAsync();
-            foreach (var item in dbDoctors)
-            {
-                doctors.Add(new GetDoctorModel
-                {
-                    Id = item.Id,
-                    FullName = item.FullName,
-                    Photo = item.Photo
-                });
-            }
-            return Ok(doctors);
+            return _context.Doctors.ToList();
         }
-
-        public async Task<ActionResult<GetDoctorModel>> GetDoctor(Guid id)
+        //public async Task<ActionResult<List<GetDoctorModel>>> GetDoctors()
+        //{
+        //    var doctors = new List<GetDoctorModel>();
+        //    var dbDoctors = await _context.Doctors.ToListAsync();
+        //    foreach (var item in dbDoctors)
+        //    {
+        //        doctors.Add(new GetDoctorModel
+        //        {
+        //            Id = item.Id,
+        //            FullName = item.FullName,
+        //            Photo = item.Photo
+        //        });
+        //    }
+        //    return Ok(doctors);
+        //}
+        public Doctor? GetDoctor(Guid id)
         {
-            var dbDoctors = await _context.Doctors.ToListAsync();
-            var doctor = new GetDoctorModel();
-            foreach (var item in dbDoctors)
-            {
-                if (item.Id == id)
-                    doctor = new GetDoctorModel
-                    {
-                        Id = item.Id,
-                        FullName = item.FullName,
-                        Photo = item.Photo
-                    };
-            }
-            if (doctor == null)
-                return BadRequest("Доктор не найден.");
-
-            return Ok(doctor);
+            return  _context.Doctors
+                .Include(_ => _.Specializations)
+                .Include(_ => _.Polyclinics)
+                .ThenInclude(_ => _.City)
+                .FirstOrDefault(_ => _.Id == id);
         }
+        //public async Task<ActionResult<GetDoctorModel>> GetDoctor(Guid id)
+        //{
+        //    var dbDoctors = await _context.Doctors.ToListAsync();
+        //    var doctor = new GetDoctorModel();
+        //    foreach (var item in dbDoctors)
+        //    {
+        //        if (item.Id == id)
+        //            doctor = new GetDoctorModel
+        //            {
+        //                Id = item.Id,
+        //                FullName = item.FullName,
+        //                Photo = item.Photo
+        //            };
+        //    }
+        //    if (doctor == null)
+        //        return BadRequest("Доктор не найден.");
 
-        public async Task<ActionResult<List<GetPolyclinicModel>>> GetDoctorPolyclinics(Guid id)
+        //    return Ok(doctor);
+        //}
+
+        //public async Task<ActionResult<List<GetPolyclinicModel>>> GetDoctorPolyclinics(Guid id)
+        //{
+        //    var doctor = await _context.Doctors
+        //        .Where(d => d.Id == id)
+        //        .Include(p => p.Polyclinics)
+        //        .ThenInclude(c => c.City)
+        //        .FirstOrDefaultAsync();
+        //    if (doctor == null)
+        //        return BadRequest("Доктор не найден.");
+
+        //    var polyclinics = new List<GetPolyclinicModel>();
+        //    foreach (var item in doctor.Polyclinics)
+        //    {
+        //        polyclinics.Add(new GetPolyclinicModel
+        //        {
+        //            Id = item.Id,
+        //            Address = item.Address,
+        //            Photo = item.Photo,
+        //            Location = item.Location,
+        //            CityId = item.City.Id,
+        //            CityName = item.City.Name
+        //        });
+        //    }
+        //    return Ok(polyclinics);
+        //}
+
+        //public async Task<ActionResult<List<GetSpecializationModel>>> GetDoctorSpecializations(Guid id)
+        //{
+        //    var doctor = await _context.Doctors
+        //        .Where(c => c.Id == id)
+        //        .Include(c => c.Specializations)
+        //        .FirstOrDefaultAsync();
+        //    if (doctor == null)
+        //        return BadRequest("Доктор не найден.");
+
+        //    var specializations = new List<GetSpecializationModel>();
+        //    foreach (var item in doctor.Specializations)
+        //    {
+        //        specializations.Add(new GetSpecializationModel
+        //        {
+        //            Id = item.Id,
+        //            Name = item.Name
+        //        });
+        //    }
+        //    return Ok(specializations);
+        //}
+        public void AddDoctor(Doctor doctor)
         {
-            var doctor = await _context.Doctors
-                .Where(d => d.Id == id)
-                .Include(p => p.Polyclinics)
-                .ThenInclude(c => c.City)
-                .FirstOrDefaultAsync();
-            if (doctor == null)
-                return BadRequest("Доктор не найден.");
-
-            var polyclinics = new List<GetPolyclinicModel>();
-            foreach (var item in doctor.Polyclinics)
-            {
-                polyclinics.Add(new GetPolyclinicModel
-                {
-                    Id = item.Id,
-                    Address = item.Address,
-                    Photo = item.Photo,
-                    Location = item.Location,
-                    CityId = item.City.Id,
-                    CityName = item.City.Name
-                });
-            }
-            return Ok(polyclinics);
+            _context.Doctors.Add(doctor);
+            _context.SaveChanges();
         }
+        //public async Task<ActionResult> AddDoctor(AddDoctorDto request)
+        //{
+        //    var newDoctor = new Doctor
+        //    {
+        //        Id = Guid.NewGuid(),
+        //        FullName = request.FullName,
+        //        Photo = request.Photo
+        //    };
 
-        public async Task<ActionResult<List<GetSpecializationModel>>> GetDoctorSpecializations(Guid id)
+        //    _context.Doctors.Add(newDoctor);
+        //    await _context.SaveChangesAsync();
+
+        //    return Ok();
+        //}
+        public void AddDoctorSpecialization(Doctor doctor, Specialization specialization)
         {
-            var doctor = await _context.Doctors
-                .Where(c => c.Id == id)
-                .Include(c => c.Specializations)
-                .FirstOrDefaultAsync();
-            if (doctor == null)
-                return BadRequest("Доктор не найден.");
-
-            var specializations = new List<GetSpecializationModel>();
-            foreach (var item in doctor.Specializations)
-            {
-                specializations.Add(new GetSpecializationModel
-                {
-                    Id = item.Id,
-                    Name = item.Name
-                });
-            }
-            return Ok(specializations);
-        }
-
-        public async Task<ActionResult> AddDoctor(AddDoctorDto request)
-        {
-            var newDoctor = new Doctor
-            {
-                Id = Guid.NewGuid(),
-                FullName = request.FullName,
-                Photo = request.Photo
-            };
-
-            _context.Doctors.Add(newDoctor);
-            await _context.SaveChangesAsync();
-
-            return Ok();
-        }
-
-        public async Task<ActionResult> AddDoctorSpecialization(AddDoctorSpecializationDto request)
-        {
-            var doctor = await _context.Doctors
-                .Where(c => c.Id == request.DoctorId)
-                .Include(c => c.Specializations)
-                .FirstOrDefaultAsync();
-            if (doctor == null)
-                return BadRequest("Доктор не найден.");
-
-            var specialization = await _context.Specializations.FindAsync(request.SpecializationId);
-            if (specialization == null)
-                return BadRequest("Специализация не найдена.");
-
             doctor.Specializations.Add(specialization);
-            await _context.SaveChangesAsync();
-
-            return Ok();
+            _context.SaveChanges();
         }
+        //public async Task<ActionResult> AddDoctorSpecialization(AddDoctorSpecializationDto request)
+        //{
+        //    var doctor = await _context.Doctors
+        //        .Where(c => c.Id == request.DoctorId)
+        //        .Include(c => c.Specializations)
+        //        .FirstOrDefaultAsync();
+        //    if (doctor == null)
+        //        return BadRequest("Доктор не найден.");
 
-        public async Task<ActionResult> AddDoctorPolyclinic(AddDoctorPolyclinicDto request)
+        //    var specialization = await _context.Specializations.FindAsync(request.SpecializationId);
+        //    if (specialization == null)
+        //        return BadRequest("Специализация не найдена.");
+
+        //    doctor.Specializations.Add(specialization);
+        //    await _context.SaveChangesAsync();
+
+        //    return Ok();
+        //}
+        public void AddDoctorPolyclinic(Doctor doctor, Polyclinic polyclinic)
         {
-            var doctor = await _context.Doctors
-                .Where(c => c.Id == request.DoctorId)
-                .Include(c => c.Polyclinics)
-                .FirstOrDefaultAsync();
-            if (doctor == null)
-                return BadRequest("Доктор не найден.");
-
-            var polyclinic = await _context.Polyclinics.FindAsync(request.PolyclinicId);
-            if (polyclinic == null)
-                return BadRequest("Поликлиника не найдена.");
-
             doctor.Polyclinics.Add(polyclinic);
-            await _context.SaveChangesAsync();
-
-            return Ok();
+            _context.SaveChanges();
         }
+        //public async Task<ActionResult> AddDoctorPolyclinic(AddDoctorPolyclinicDto request)
+        //{
+        //    var doctor = await _context.Doctors
+        //        .Where(c => c.Id == request.DoctorId)
+        //        .Include(c => c.Polyclinics)
+        //        .FirstOrDefaultAsync();
+        //    if (doctor == null)
+        //        return BadRequest("Доктор не найден.");
 
-        public async Task<ActionResult> UpdateDoctor(UpdateDoctorDto request)
+        //    var polyclinic = await _context.Polyclinics.FindAsync(request.PolyclinicId);
+        //    if (polyclinic == null)
+        //        return BadRequest("Поликлиника не найдена.");
+
+        //    doctor.Polyclinics.Add(polyclinic);
+        //    await _context.SaveChangesAsync();
+
+        //    return Ok();
+        //}
+        public void UpdateDoctor(Doctor dbDoctor, UpdateDoctorDto request)
         {
-            var dbDoctor = await _context.Doctors.FindAsync(request.Id);
-            if (dbDoctor == null)
-                return BadRequest("Доктор не найден.");
-
             dbDoctor.FullName = request.FullName;
-            dbDoctor.Photo = request.Photo;
-
-            await _context.SaveChangesAsync();
-            return Ok();
+            _context.SaveChanges();
         }
-
-        public async Task<ActionResult> DeleteDoctor(Guid id)
+        public void AddDoctorsPhoto(Doctor dbDoctor, string path)
         {
-            var dbDoctor = await _context.Doctors.FindAsync(id);
-            if (dbDoctor == null)
-                return BadRequest("Доктор не найден.");
+            dbDoctor.Photo = path;
+            _context.SaveChanges();
+        }
+        //public async Task<ActionResult> UpdateDoctor(UpdateDoctorDto request)
+        //{
+        //    var dbDoctor = await _context.Doctors.FindAsync(request.Id);
+        //    if (dbDoctor == null)
+        //        return BadRequest("Доктор не найден.");
 
+        //    dbDoctor.FullName = request.FullName;
+        //    dbDoctor.Photo = request.Photo;
+
+        //    await _context.SaveChangesAsync();
+        //    return Ok();
+        //}
+        public void DeleteDoctor(Doctor dbDoctor)
+        {
             _context.Doctors.Remove(dbDoctor);
-            await _context.SaveChangesAsync();
-
-            return Ok();
+            _context.SaveChanges();
         }
+        //public async Task<ActionResult> DeleteDoctor(Guid id)
+        //{
+        //    var dbDoctor = await _context.Doctors.FindAsync(id);
+        //    if (dbDoctor == null)
+        //        return BadRequest("Доктор не найден.");
 
-        public async Task<ActionResult> DeleteDoctorSpecialization(AddDoctorSpecializationDto request)
+        //    _context.Doctors.Remove(dbDoctor);
+        //    await _context.SaveChangesAsync();
+
+        //    return Ok();
+        //}
+        public void DeleteDoctorSpecialization(Doctor doctor, Specialization specialization)
         {
-            var doctor = await _context.Doctors
-                .Where(c => c.Id == request.DoctorId)
-                .Include(c => c.Specializations)
-                .FirstOrDefaultAsync();
-            if (doctor == null)
-                return BadRequest("Доктор не найден.");
-
-            var specialization = await _context.Specializations.FindAsync(request.SpecializationId);
-            if (specialization == null)
-                return BadRequest("Специализация не найдена.");
-
             doctor.Specializations.Remove(specialization);
-            await _context.SaveChangesAsync();
-
-            return Ok();
+            _context.SaveChanges();
         }
+        //public async Task<ActionResult> DeleteDoctorSpecialization(AddDoctorSpecializationDto request)
+        //{
+        //    var doctor = await _context.Doctors
+        //        .Where(c => c.Id == request.DoctorId)
+        //        .Include(c => c.Specializations)
+        //        .FirstOrDefaultAsync();
+        //    if (doctor == null)
+        //        return BadRequest("Доктор не найден.");
 
-        public async Task<ActionResult> DeleteDoctorPolyclinic(AddDoctorPolyclinicDto request)
+        //    var specialization = await _context.Specializations.FindAsync(request.SpecializationId);
+        //    if (specialization == null)
+        //        return BadRequest("Специализация не найдена.");
+
+        //    doctor.Specializations.Remove(specialization);
+        //    await _context.SaveChangesAsync();
+
+        //    return Ok();
+        //}
+        public void DeleteDoctorPolyclinic(Doctor doctor, Polyclinic polyclinic)
         {
-            var doctor = await _context.Doctors
-                .Where(c => c.Id == request.DoctorId)
-                .Include(c => c.Polyclinics)
-                .FirstOrDefaultAsync();
-            if (doctor == null)
-                return BadRequest("Доктор не найден.");
-
-            var polyclinic = await _context.Polyclinics.FindAsync(request.PolyclinicId);
-            if (polyclinic == null)
-                return BadRequest("Поликлиника не найдена.");
-
             doctor.Polyclinics.Remove(polyclinic);
-            await _context.SaveChangesAsync();
-
-            return Ok();
+            _context.SaveChanges();
         }
+        //public async Task<ActionResult> DeleteDoctorPolyclinic(AddDoctorPolyclinicDto request)
+        //{
+        //    var doctor = await _context.Doctors
+        //        .Where(c => c.Id == request.DoctorId)
+        //        .Include(c => c.Polyclinics)
+        //        .FirstOrDefaultAsync();
+        //    if (doctor == null)
+        //        return BadRequest("Доктор не найден.");
+
+        //    var polyclinic = await _context.Polyclinics.FindAsync(request.PolyclinicId);
+        //    if (polyclinic == null)
+        //        return BadRequest("Поликлиника не найдена.");
+
+        //    doctor.Polyclinics.Remove(polyclinic);
+        //    await _context.SaveChangesAsync();
+
+        //    return Ok();
+        //}
     }
 }

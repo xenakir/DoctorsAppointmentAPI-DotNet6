@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
-
-namespace DoctorsAppointment.Controllers
+﻿namespace DoctorsAppointment.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -13,44 +11,113 @@ namespace DoctorsAppointment.Controllers
         }
 
         [HttpGet("GetCities")]
-        public async Task<ActionResult<List<GetCityModel>>> GetCities()
+        public ActionResult<List<GetCityModel>> GetCities()
         {
-            return await _cityService.GetCities();
+            var cities = new List<GetCityModel>();
+            var dbCities = _cityService.GetCities();
+            foreach (var item in dbCities)
+            {
+                cities.Add(new GetCityModel
+                {
+                    Id = item.Id,
+                    Name = item.Name,
+                    Type = item.Type
+                });
+            }
+            return Ok(cities);
         }
 
         [HttpGet("{id} GetCity")]
-        public async Task<ActionResult<GetCityModel>> GetCity(Guid id)
+        public ActionResult<GetCityModel> GetCity(Guid id)
         {
-            return await _cityService.GetCity(id);
+            var dbCity = _cityService.GetCity(id);
+            if (dbCity == null)
+                return BadRequest("Город не найден.");
+
+            var city = new GetCityModel
+            {
+                Id = dbCity.Id,
+                Name = dbCity.Name,
+                Type = dbCity.Type
+            };
+            return Ok(city);
         }
 
         [HttpGet("{id} GetCityPolyclinics")]
-        public async Task<ActionResult<List<GetPolyclinicModel>>> GetCityPolyclinics(Guid id)
+        public ActionResult<List<GetPolyclinicModel>> GetCityPolyclinics(Guid id)
         {
-            return await _cityService.GetCityPolyclinics(id);
+            var dbCity = _cityService.GetCity(id);
+            if (dbCity == null)
+                return BadRequest("Город не найден.");
+
+            var polyclinics = new List<GetPolyclinicModel>();
+            foreach (var polyclinic in dbCity.Polyclinics)
+                polyclinics.Add(new GetPolyclinicModel
+                {
+                    Id = polyclinic.Id,
+                    Address = polyclinic.Address,
+                    Photo = polyclinic.Photo,
+                    Location = polyclinic.Location,
+                    CityId = dbCity.Id,
+                    CityName = dbCity.Name
+                });
+
+            return Ok(polyclinics);
         }
 
         [HttpGet("{id} GetCityDoctors")]
-        public async Task<ActionResult<List<GetDoctorModel>>> GetCityDoctors(Guid id)
+        public ActionResult<List<GetDoctorModel>> GetCityDoctors(Guid id)
         {
-            return await _cityService.GetCityDoctors(id);
+            var dbCity = _cityService.GetCity(id);
+            if (dbCity == null)
+                return BadRequest("Город не найден.");
+
+            var doctors = new List<GetDoctorModel>();
+            foreach (var polyclinic in dbCity.Polyclinics)
+                foreach (var doctor in polyclinic.Doctors)
+                    doctors.Add(new GetDoctorModel
+                    {
+                        Id = doctor.Id,
+                        FullName = doctor.FullName,
+                        Photo = doctor.Photo
+                    });
+
+            return Ok(doctors);
         }
         [HttpPost("AddCity")]
-        public async Task<ActionResult> AddCity(AddCityDto request)
+        public ActionResult AddCity(AddCityDto request)
         {
-            return await _cityService.AddCity(request);
+            var newCity = new City
+            {
+                Id = Guid.NewGuid(),
+                Name = request.Name,
+                Type = request.Type
+            };
+
+            _cityService.AddCity(newCity);
+            return Ok();
         }
 
         [HttpPut("UpdateCity")]
-        public async Task<ActionResult> UpdateCity(UpdateCityDto request)
+        public ActionResult UpdateCity(UpdateCityDto request)
         {
-            return await _cityService.UpdateCity(request);
+            var dbCity = _cityService.GetCity(request.Id);
+            if (dbCity == null)
+                return BadRequest("Город не найден.");
+
+            _cityService.UpdateCity(dbCity, request);
+            return Ok();
         }
 
         [HttpDelete("{id} DeleteCity")]
-        public async Task<ActionResult> DeleteCity(Guid id)
+        public ActionResult DeleteCity(Guid id)
         {
-            return await _cityService.DeleteCity(id);
+            var dbCity = _cityService.GetCity(id);
+            if (dbCity == null)
+                return BadRequest("Город не найден.");
+
+            _cityService.DeleteCity(dbCity);
+            return Ok();
         }
     }
 }

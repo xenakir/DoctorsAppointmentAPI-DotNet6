@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
-
-namespace DoctorsAppointment.Controllers
+﻿namespace DoctorsAppointment.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -13,33 +11,70 @@ namespace DoctorsAppointment.Controllers
         }
 
         [HttpGet("GetSpecializations")]
-        public async Task<ActionResult<List<GetSpecializationModel>>> GetSpecializations()
+        public ActionResult<List<GetSpecializationModel>> GetSpecializations()
         {
-            return await _specializationService.GetSpecializations();
+            var specializations = new List<GetSpecializationModel>();
+            var dbSpecializations = _specializationService.GetSpecializations();
+            foreach (var item in dbSpecializations)
+            {
+                specializations.Add(new GetSpecializationModel
+                {
+                    Id = item.Id,
+                    Name = item.Name
+                });
+            }
+            return Ok(specializations);
         }
 
         [HttpGet("{id} GetSpecialization")]
-        public async Task<ActionResult<Specialization>> GetSpecialization(Guid id)
+        public ActionResult<Specialization> GetSpecialization(Guid id)
         {
-            return await _specializationService.GetSpecialization(id);
+            var dbSpecialization = _specializationService.GetSpecialization(id);
+            if (dbSpecialization == null)
+                return BadRequest("Специализация не найдена.");
+
+            var specialization = new GetSpecializationModel
+            {
+                Id = dbSpecialization.Id,
+                Name = dbSpecialization.Name
+            };
+
+            return Ok(specialization);
         }
 
         [HttpPost("{name}")]
-        public async Task<ActionResult> AddSpecialization(string name)
+        public ActionResult AddSpecialization(string name)
         {
-            return await _specializationService.AddSpecialization(name);
+            var newSpecialization = new Specialization
+            {
+                Id = Guid.NewGuid(),
+                Name = name
+            };
+
+            _specializationService.AddSpecialization(newSpecialization);
+            return Ok();
         }
 
         [HttpPut("UpdateSpecialization")]
-        public async Task<ActionResult> UpdateSpecialization(UpdateSpecializationDto request)
+        public ActionResult UpdateSpecialization(UpdateSpecializationDto request)
         {
-            return await _specializationService.UpdateSpecialization(request);
+            var dbSpecialization = _specializationService.GetSpecialization(request.Id);
+            if (dbSpecialization == null)
+                return BadRequest("Специализация не найдена.");
+
+            _specializationService.UpdateSpecialization(dbSpecialization, request);
+            return Ok();
         }
 
         [HttpDelete("{id} DeleteSpecialization")]
-        public async Task<ActionResult> DeleteSpecialization(Guid id)
+        public ActionResult DeleteSpecialization(Guid id)
         {
-            return await _specializationService.DeleteSpecialization(id);
+            var dbSpecialization = _specializationService.GetSpecialization(id);
+            if (dbSpecialization == null)
+                return BadRequest("Специализация не найдена.");
+
+            _specializationService.DeleteSpecialization(dbSpecialization);
+            return Ok();
         }
     }
 }
