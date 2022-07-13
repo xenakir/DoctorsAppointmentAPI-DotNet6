@@ -16,7 +16,10 @@
         public Specialization? GetSpecialization(Guid id)
         {
             return _context.Specializations
-                .FirstOrDefault(_ => _.Id == id); ;
+                .Include(_ => _.Doctors)
+                .ThenInclude(_ => _.Polyclinics)
+                .ThenInclude(_ => _.City)
+                .FirstOrDefault(_ => _.Id == id);
         }
 
         public void AddSpecialization(Specialization specialization)
