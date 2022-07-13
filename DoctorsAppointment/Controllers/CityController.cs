@@ -75,12 +75,14 @@
             var doctors = new List<GetDoctorModel>();
             foreach (var polyclinic in dbCity.Polyclinics)
                 foreach (var doctor in polyclinic.Doctors)
-                    doctors.Add(new GetDoctorModel
-                    {
-                        Id = doctor.Id,
-                        FullName = doctor.FullName,
-                        Photo = doctor.Photo
-                    });
+                    if (doctors.Find(_ => _.Id == doctor.Id) == null)
+                        doctors.Add(new GetDoctorModel
+                        {
+                            Id = doctor.Id,
+                            FullName = doctor.FullName,
+                            Photo = doctor.Photo
+                        });
+
 
             return Ok(doctors);
         }

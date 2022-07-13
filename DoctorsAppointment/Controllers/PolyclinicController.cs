@@ -76,22 +76,22 @@
         }
 
         [HttpPost("AddPolyclinic")]
-        public ActionResult AddPolyclinic([FromForm] FileUpload objectFile, AddPolyclinicDto request)
+        public ActionResult AddPolyclinic(AddPolyclinicDto request)
         {
-            string path1, path2;
-            if (objectFile.file.Length > 0)
-            {
-                path1 = _webHostEnvironment.WebRootPath;
-                path2 = "/Content/" + Guid.NewGuid().ToString() + "_" + objectFile.file.FileName;
+            //string path1, path2;
+            //if (objectFile.file.Length > 0)
+            //{
+            //    path1 = _webHostEnvironment.WebRootPath;
+            //    path2 = "/Content/" + Guid.NewGuid().ToString() + "_" + objectFile.file.FileName;
 
-                using (FileStream fileStream = System.IO.File.Create(path1 + path2))
-                {
-                    objectFile.file.CopyTo(fileStream);
-                    fileStream.Flush();
-                }
-            }
-            else
-                return BadRequest("Ошибка загрузки фотографии.");
+            //    using (FileStream fileStream = System.IO.File.Create(path1 + path2))
+            //    {
+            //        objectFile.file.CopyTo(fileStream);
+            //        fileStream.Flush();
+            //    }
+            //}
+            //else
+            //    return BadRequest("Ошибка загрузки фотографии.");
 
             var dbCity = _cityService.GetCity(request.CityId);
             if (dbCity == null)
@@ -101,7 +101,7 @@
             {
                 Id = Guid.NewGuid(),
                 Address = request.Address,
-                Photo = path2,
+                Photo = "",
                 Location = request.Location,
                 City = dbCity
             };

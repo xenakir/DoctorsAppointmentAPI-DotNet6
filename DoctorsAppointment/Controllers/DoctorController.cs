@@ -96,28 +96,28 @@
         }
 
         [HttpPost("AddDoctor")]
-        public ActionResult AddDoctor([FromForm] FileUpload objectFile, string fullName)
+        public ActionResult AddDoctor(string fullName)
         {
-            string path1, path2;
-            if (objectFile.file.Length > 0)
-            {
-                path1 = _webHostEnvironment.WebRootPath;
-                path2 = "/Content/" + Guid.NewGuid().ToString() + "_" + objectFile.file.FileName;
+            //string path1, path2;
+            //if (objectFile.file.Length > 0)
+            //{
+            //    path1 = _webHostEnvironment.WebRootPath;
+            //    path2 = "/Content/" + Guid.NewGuid().ToString() + "_" + objectFile.file.FileName;
 
-                using (FileStream fileStream = System.IO.File.Create(path1 + path2))
-                {
-                    objectFile.file.CopyTo(fileStream);
-                    fileStream.Flush();
-                }
-            }
-            else
-                return BadRequest("Ошибка загрузки фотографии.");
+            //    using (FileStream fileStream = System.IO.File.Create(path1 + path2))
+            //    {
+            //        objectFile.file.CopyTo(fileStream);
+            //        fileStream.Flush();
+            //    }
+            //}
+            //else
+            //    return BadRequest("Ошибка загрузки фотографии.");
 
             var newDoctor = new Doctor
             {
                 Id = Guid.NewGuid(),
                 FullName = fullName,
-                Photo = path2
+                Photo = ""
             };
 
             _doctorService.AddDoctor(newDoctor);
