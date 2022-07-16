@@ -131,7 +131,6 @@
             if (dbDoctor == null)
                 return BadRequest("Доктор не найден.");
 
-
             string path1, path2;
             if (objectFile.file.Length > 0)
             {
