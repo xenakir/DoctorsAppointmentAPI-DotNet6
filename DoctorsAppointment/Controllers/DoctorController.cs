@@ -1,23 +1,30 @@
-﻿using Microsoft.AspNetCore.Mvc;
-
-namespace DoctorsAppointment.Controllers
+﻿namespace DoctorsAppointment.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
     public class DoctorController : ControllerBase
     {
-        private readonly DataContext _context;
-
-        public DoctorController(DataContext context)
+        private IDoctorService _doctorService;
+        private ISpecializationService _specializationService;
+        private IPolyclinicService _polyclinicService;
+        private static IWebHostEnvironment _webHostEnvironment;
+        public DoctorController(IDoctorService doctorService, 
+            ISpecializationService specializationService,
+            IPolyclinicService polyclinicService,
+            IWebHostEnvironment webHostEnvironment)
         {
-            _context = context;
+            _doctorService = doctorService;
+            _specializationService = specializationService;
+            _polyclinicService = polyclinicService;
+            _webHostEnvironment = webHostEnvironment;
         }
 
         [HttpGet("GetDoctors")]
-        public async Task<ActionResult<List<GetDoctorModel>>> GetDoctors()
+        public ActionResult GetDoctors()
+        //public IActionResult GetDoctors()
         {
             var doctors = new List<GetDoctorModel>();
-            var dbDoctors = await _context.Doctors.ToListAsync();
+            var dbDoctors = _doctorService.GetDoctors();
             foreach (var item in dbDoctors)
             {
                 doctors.Add(new GetDoctorModel
@@ -30,19 +37,32 @@ namespace DoctorsAppointment.Controllers
             return Ok(doctors);
         }
 
-        [HttpGet("{id} GetDoctorPolyclinics")]
-        public async Task<ActionResult<List<GetPolyclinicModel>>> GetDoctorPolyclinics(Guid id)
+        [HttpGet("GetDoctor/{id:Guid}")]
+        public ActionResult GetDoctor(Guid id)
         {
-            var doctor = await _context.Doctors
-                .Where(d => d.Id == id)
-                .Include(p => p.Polyclinics)
-                .ThenInclude(c => c.City)
-                .FirstOrDefaultAsync();
-            if (doctor == null)
+            var dbDoctor = _doctorService.GetDoctor(id);
+            if (dbDoctor == null)
+                return BadRequest("Доктор не найден.");
+
+            var doctor = new GetDoctorModel
+            {
+                Id = dbDoctor.Id,
+                FullName = dbDoctor.FullName,
+                Photo = dbDoctor.Photo
+            };
+
+            return Ok(doctor);
+        }
+
+        [HttpGet("GetDoctorPolyclinics/{id:Guid}")]
+        public ActionResult GetDoctorPolyclinics(Guid id)
+        {
+            var dbDoctor = _doctorService.GetDoctor(id);
+            if (dbDoctor == null)
                 return BadRequest("Доктор не найден.");
 
             var polyclinics = new List<GetPolyclinicModel>();
-            foreach (var item in doctor.Polyclinics)
+            foreach (var item in dbDoctor.Polyclinics)
             {
                 polyclinics.Add(new GetPolyclinicModel
                 {
@@ -57,18 +77,15 @@ namespace DoctorsAppointment.Controllers
             return Ok(polyclinics);
         }
 
-        [HttpGet("{id} GetDoctorSpecializations")]
-        public async Task<ActionResult<List<GetSpecializationModel>>> GetDoctorSpecializations(Guid id)
+        [HttpGet("GetDoctorSpecializations/{id:Guid}")]
+        public ActionResult GetDoctorSpecializations(Guid id)
         {
-            var doctor = await _context.Doctors
-                .Where(c => c.Id == id)
-                .Include(c => c.Specializations)
-                .FirstOrDefaultAsync();
-            if (doctor == null)
+            var dbDoctor = _doctorService.GetDoctor(id);
+            if (dbDoctor == null)
                 return BadRequest("Доктор не найден.");
 
             var specializations = new List<GetSpecializationModel>();
-            foreach (var item in doctor.Specializations)
+            foreach (var item in dbDoctor.Specializations)
             {
                 specializations.Add(new GetSpecializationModel
                 {
@@ -79,147 +96,140 @@ namespace DoctorsAppointment.Controllers
             return Ok(specializations);
         }
 
-        [HttpGet("{id} GetDoctor")]
-        public async Task<ActionResult<GetDoctorModel>> GetDoctor(Guid id)
-        {
-            var dbDoctors = await _context.Doctors.ToListAsync();
-            var doctor = new GetDoctorModel();
-            foreach (var item in dbDoctors)
-            {
-                if (item.Id == id)
-                    doctor = new GetDoctorModel
-                    {
-                        Id = item.Id,
-                        FullName = item.FullName,
-                        Photo = item.Photo
-                    };
-            }
-            if (doctor == null)
-                return BadRequest("Доктор не найден.");
-
-            return Ok(doctor);
-        }
-
         [HttpPost("AddDoctor")]
-        public async Task<ActionResult> AddDoctor(AddDoctorDto request)
+        public ActionResult AddDoctor(UpdateDoctorDto request)
         {
+            //string path1, path2;
+            //if (objectFile.file.Length > 0)
+            //{
+            //    path1 = _webHostEnvironment.WebRootPath;
+            //    path2 = "/Content/" + Guid.NewGuid().ToString() + "_" + objectFile.file.FileName;
+
+            //    using (FileStream fileStream = System.IO.File.Create(path1 + path2))
+            //    {
+            //        objectFile.file.CopyTo(fileStream);
+            //        fileStream.Flush();
+            //    }
+            //}
+            //else
+            //    return BadRequest("Ошибка загрузки фотографии.");
+
             var newDoctor = new Doctor
             {
                 Id = Guid.NewGuid(),
                 FullName = request.FullName,
-                Photo = request.Photo
+                Photo = ""
             };
 
-            _context.Doctors.Add(newDoctor);
-            await _context.SaveChangesAsync();
-
+            _doctorService.AddDoctor(newDoctor);
             return Ok();
         }
 
-        [HttpPost("AddDoctorSpecialization")]
-        public async Task<ActionResult> AddDoctorSpecialization(AddDoctorSpecializationDto request)
+        [HttpPost("AddDoctorsPhoto")]
+        public ActionResult AddDoctorsPhoto([FromForm] FileUpload objectFile, Guid id)
         {
-            var doctor = await _context.Doctors
-                .Where(c => c.Id == request.DoctorId)
-                .Include(c => c.Specializations)
-                .FirstOrDefaultAsync();
-            if (doctor == null)
-                return BadRequest("Доктор не найден.");
-
-            var specialization = await _context.Specializations.FindAsync(request.SpecializationId);
-            if (specialization == null)
-                return BadRequest("Специализация не найдена.");
-
-            doctor.Specializations.Add(specialization);
-            await _context.SaveChangesAsync();
-
-            return Ok();
-        }
-
-        [HttpPost("AddDoctorPolyclinic")]
-        public async Task<ActionResult> AddDoctorPolyclinic(AddDoctorPolyclinicDto request)
-        {
-            var doctor = await _context.Doctors
-                .Where(c => c.Id == request.DoctorId)
-                .Include(c => c.Polyclinics)
-                .FirstOrDefaultAsync();
-            if (doctor == null)
-                return BadRequest("Доктор не найден.");
-
-            var polyclinic = await _context.Polyclinics.FindAsync(request.PolyclinicId);
-            if (polyclinic == null)
-                return BadRequest("Поликлиника не найдена.");
-
-            doctor.Polyclinics.Add(polyclinic);
-            await _context.SaveChangesAsync();
-
-            return Ok();
-        }
-
-        [HttpPut("UpdateDoctor")]
-        public async Task<ActionResult> UpdateDoctor(UpdateDoctorDto request)
-        {
-            var dbDoctor = await _context.Doctors.FindAsync(request.Id);
+            var dbDoctor = _doctorService.GetDoctor(id);
             if (dbDoctor == null)
                 return BadRequest("Доктор не найден.");
 
-            dbDoctor.FullName = request.FullName;
-            dbDoctor.Photo = request.Photo;
+            string path1, path2;
+            if (objectFile.file.Length > 0)
+            {
+                path1 = _webHostEnvironment.WebRootPath;
+                path2 = "/Content/" + Guid.NewGuid().ToString() + "_" + objectFile.file.FileName;
 
-            await _context.SaveChangesAsync();
+                using (FileStream fileStream = System.IO.File.Create(path1 + path2))
+                {
+                    objectFile.file.CopyTo(fileStream);
+                    fileStream.Flush();
+                }
+            }
+            else
+                return BadRequest("Ошибка загрузки фотографии.");
+
+            _doctorService.AddDoctorsPhoto(dbDoctor, path2);
             return Ok();
         }
 
-        [HttpDelete("{id} DeleteDoctor")]
-        public async Task<ActionResult> DeleteDoctor(Guid id)
+        [HttpPut("AddDoctorSpecialization")]
+        public ActionResult AddDoctorSpecialization(DoctorSpecialization request)
         {
-            var dbDoctor = await _context.Doctors.FindAsync(id);
+            var dbDoctor = _doctorService.GetDoctor(request.IdD);
             if (dbDoctor == null)
                 return BadRequest("Доктор не найден.");
 
-            _context.Doctors.Remove(dbDoctor);
-            await _context.SaveChangesAsync();
-
-            return Ok();
-        }
-
-        [HttpDelete("DeleteDoctorSpecialization")]
-        public async Task<ActionResult> DeleteDoctorSpecialization(AddDoctorSpecializationDto request)
-        {
-            var doctor = await _context.Doctors
-                .Where(c => c.Id == request.DoctorId)
-                .Include(c => c.Specializations)
-                .FirstOrDefaultAsync();
-            if (doctor == null)
-                return BadRequest("Доктор не найден.");
-
-            var specialization = await _context.Specializations.FindAsync(request.SpecializationId);
-            if (specialization == null)
+            var dbSpecialization = _specializationService.GetSpecialization(request.IdS);
+            if (dbSpecialization == null)
                 return BadRequest("Специализация не найдена.");
 
-            doctor.Specializations.Remove(specialization);
-            await _context.SaveChangesAsync();
-
+            _doctorService.AddDoctorSpecialization(dbDoctor, dbSpecialization);
             return Ok();
         }
 
-        [HttpDelete("DeleteDoctorPolyclinic")]
-        public async Task<ActionResult> DeleteDoctorPolyclinic(AddDoctorPolyclinicDto request)
+        [HttpPut("AddDoctorPolyclinic")]
+        public ActionResult AddDoctorPolyclinic(DoctorPolyclinic request)
         {
-            var doctor = await _context.Doctors
-                .Where(c => c.Id == request.DoctorId)
-                .Include(c => c.Polyclinics)
-                .FirstOrDefaultAsync();
-            if (doctor == null)
+            var dbDoctor = _doctorService.GetDoctor(request.IdD);
+            if (dbDoctor == null)
                 return BadRequest("Доктор не найден.");
 
-            var polyclinic = await _context.Polyclinics.FindAsync(request.PolyclinicId);
-            if (polyclinic == null)
+            var dbPolyclinic = _polyclinicService.GetPolyclinic(request.IdP);
+            if (dbPolyclinic == null)
                 return BadRequest("Поликлиника не найдена.");
 
-            doctor.Polyclinics.Remove(polyclinic);
-            await _context.SaveChangesAsync();
+            _doctorService.AddDoctorPolyclinic(dbDoctor, dbPolyclinic);
+            return Ok();
+        }
 
+        [HttpPut("UpdateDoctor/{id:Guid}")]
+        public ActionResult UpdateDoctor(Guid id, UpdateDoctorDto request)
+        {
+            var dbDoctor = _doctorService.GetDoctor(id);
+            if (dbDoctor == null)
+                return BadRequest("Доктор не найден.");
+
+            _doctorService.UpdateDoctor(dbDoctor, request);
+            return Ok();
+        }
+
+        [HttpDelete("DeleteDoctor/{id:Guid}")]
+        public ActionResult DeleteDoctor(Guid id)
+        {
+            var dbDoctor = _doctorService.GetDoctor(id);
+            if (dbDoctor == null)
+                return BadRequest("Доктор не найден.");
+
+            _doctorService.DeleteDoctor(dbDoctor);
+            return Ok();
+        }
+
+        [HttpPut("DeleteDoctorSpecialization")]
+        public ActionResult DeleteDoctorSpecialization(DoctorSpecialization request)
+        {
+            var dbDoctor = _doctorService.GetDoctor(request.IdD);
+            if (dbDoctor == null)
+                return BadRequest("Доктор не найден.");
+
+            var dbSpecialization = _specializationService.GetSpecialization(request.IdS);
+            if (dbSpecialization == null)
+                return BadRequest("Специализация не найдена.");
+
+            _doctorService.DeleteDoctorSpecialization(dbDoctor, dbSpecialization);
+            return Ok();
+        }
+
+        [HttpPut("DeleteDoctorPolyclinic")]
+        public ActionResult DeleteDoctorPolyclinic(DoctorPolyclinic request)
+        {
+            var dbDoctor = _doctorService.GetDoctor(request.IdD);
+            if (dbDoctor == null)
+                return BadRequest("Доктор не найден.");
+
+            var dbPolyclinic = _polyclinicService.GetPolyclinic(request.IdP);
+            if (dbPolyclinic == null)
+                return BadRequest("Поликлиника не найдена.");
+
+            _doctorService.DeleteDoctorPolyclinic(dbDoctor, dbPolyclinic);
             return Ok();
         }
     }

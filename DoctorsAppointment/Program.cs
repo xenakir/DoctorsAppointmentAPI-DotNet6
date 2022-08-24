@@ -3,14 +3,14 @@ global using DoctorsAppointment.Models.GetModels;
 global using DoctorsAppointment.Models.DtoModels;
 global using DoctorsAppointment.Data;
 global using Microsoft.EntityFrameworkCore;
-global using System.Data.Entity.Spatial;
+global using DoctorsAppointment.Service;
+global using DoctorsAppointment.IService;
 
 var builder = WebApplication.CreateBuilder(args);
 
 
 builder.Services.AddControllers().AddNewtonsoftJson(options =>
-    options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
-);
+    options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
 
 // Add services to the container.
 
@@ -19,6 +19,12 @@ builder.Services.AddDbContext<DataContext>(options => {
 });
 
 builder.Services.AddControllers();
+
+builder.Services.AddScoped<ICityService, CityService>();
+builder.Services.AddScoped<IDoctorService, DoctorService>();
+builder.Services.AddScoped<IPolyclinicService, PolyclinicService>();
+builder.Services.AddScoped<ISpecializationService, SpecializationService>();
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -33,6 +39,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+//ƒобавл€ем разрешение дл€ использовани€
+app.UseCors(policy => policy.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
 
 app.UseAuthorization();
 
