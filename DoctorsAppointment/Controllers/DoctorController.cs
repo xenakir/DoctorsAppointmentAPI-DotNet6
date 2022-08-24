@@ -20,7 +20,8 @@
         }
 
         [HttpGet("GetDoctors")]
-        public ActionResult<List<GetDoctorModel>> GetDoctors()
+        public ActionResult GetDoctors()
+        //public IActionResult GetDoctors()
         {
             var doctors = new List<GetDoctorModel>();
             var dbDoctors = _doctorService.GetDoctors();
@@ -36,8 +37,8 @@
             return Ok(doctors);
         }
 
-        [HttpGet("{id} GetDoctor")]
-        public ActionResult<GetDoctorModel> GetDoctor(Guid id)
+        [HttpGet("GetDoctor/{id:Guid}")]
+        public ActionResult GetDoctor(Guid id)
         {
             var dbDoctor = _doctorService.GetDoctor(id);
             if (dbDoctor == null)
@@ -53,8 +54,8 @@
             return Ok(doctor);
         }
 
-        [HttpGet("{id} GetDoctorPolyclinics")]
-        public ActionResult<List<GetPolyclinicModel>> GetDoctorPolyclinics(Guid id)
+        [HttpGet("GetDoctorPolyclinics/{id:Guid}")]
+        public ActionResult GetDoctorPolyclinics(Guid id)
         {
             var dbDoctor = _doctorService.GetDoctor(id);
             if (dbDoctor == null)
@@ -76,8 +77,8 @@
             return Ok(polyclinics);
         }
 
-        [HttpGet("{id} GetDoctorSpecializations")]
-        public ActionResult<List<GetSpecializationModel>> GetDoctorSpecializations(Guid id)
+        [HttpGet("GetDoctorSpecializations/{id:Guid}")]
+        public ActionResult GetDoctorSpecializations(Guid id)
         {
             var dbDoctor = _doctorService.GetDoctor(id);
             if (dbDoctor == null)
@@ -96,7 +97,7 @@
         }
 
         [HttpPost("AddDoctor")]
-        public ActionResult AddDoctor(string fullName)
+        public ActionResult AddDoctor(UpdateDoctorDto request)
         {
             //string path1, path2;
             //if (objectFile.file.Length > 0)
@@ -116,7 +117,7 @@
             var newDoctor = new Doctor
             {
                 Id = Guid.NewGuid(),
-                FullName = fullName,
+                FullName = request.FullName,
                 Photo = ""
             };
 
@@ -150,16 +151,14 @@
             return Ok();
         }
 
-
-        [HttpPost("AddDoctorSpecialization")]
-        public ActionResult AddDoctorSpecialization(
-            Guid DoctorId, Guid SpecializationId)
+        [HttpPut("AddDoctorSpecialization")]
+        public ActionResult AddDoctorSpecialization(DoctorSpecialization request)
         {
-            var dbDoctor = _doctorService.GetDoctor(DoctorId);
+            var dbDoctor = _doctorService.GetDoctor(request.IdD);
             if (dbDoctor == null)
                 return BadRequest("Доктор не найден.");
 
-            var dbSpecialization = _specializationService.GetSpecialization(SpecializationId);
+            var dbSpecialization = _specializationService.GetSpecialization(request.IdS);
             if (dbSpecialization == null)
                 return BadRequest("Специализация не найдена.");
 
@@ -167,15 +166,14 @@
             return Ok();
         }
 
-        [HttpPost("AddDoctorPolyclinic")]
-        public async Task<ActionResult> AddDoctorPolyclinic(
-            Guid DoctorId, Guid PolyclinicId)
+        [HttpPut("AddDoctorPolyclinic")]
+        public ActionResult AddDoctorPolyclinic(DoctorPolyclinic request)
         {
-            var dbDoctor = _doctorService.GetDoctor(DoctorId);
+            var dbDoctor = _doctorService.GetDoctor(request.IdD);
             if (dbDoctor == null)
                 return BadRequest("Доктор не найден.");
 
-            var dbPolyclinic = _polyclinicService.GetPolyclinic(PolyclinicId);
+            var dbPolyclinic = _polyclinicService.GetPolyclinic(request.IdP);
             if (dbPolyclinic == null)
                 return BadRequest("Поликлиника не найдена.");
 
@@ -183,10 +181,10 @@
             return Ok();
         }
 
-        [HttpPut("UpdateDoctor")]
-        public ActionResult UpdateDoctor(UpdateDoctorDto request)
+        [HttpPut("UpdateDoctor/{id:Guid}")]
+        public ActionResult UpdateDoctor(Guid id, UpdateDoctorDto request)
         {
-            var dbDoctor = _doctorService.GetDoctor(request.Id);
+            var dbDoctor = _doctorService.GetDoctor(id);
             if (dbDoctor == null)
                 return BadRequest("Доктор не найден.");
 
@@ -194,7 +192,7 @@
             return Ok();
         }
 
-        [HttpDelete("{id} DeleteDoctor")]
+        [HttpDelete("DeleteDoctor/{id:Guid}")]
         public ActionResult DeleteDoctor(Guid id)
         {
             var dbDoctor = _doctorService.GetDoctor(id);
@@ -205,15 +203,14 @@
             return Ok();
         }
 
-        [HttpDelete("DeleteDoctorSpecialization")]
-        public ActionResult DeleteDoctorSpecialization(
-            Guid DoctorId, Guid SpecializationId)
+        [HttpPut("DeleteDoctorSpecialization")]
+        public ActionResult DeleteDoctorSpecialization(DoctorSpecialization request)
         {
-            var dbDoctor = _doctorService.GetDoctor(DoctorId);
+            var dbDoctor = _doctorService.GetDoctor(request.IdD);
             if (dbDoctor == null)
                 return BadRequest("Доктор не найден.");
 
-            var dbSpecialization = _specializationService.GetSpecialization(SpecializationId);
+            var dbSpecialization = _specializationService.GetSpecialization(request.IdS);
             if (dbSpecialization == null)
                 return BadRequest("Специализация не найдена.");
 
@@ -221,15 +218,14 @@
             return Ok();
         }
 
-        [HttpDelete("DeleteDoctorPolyclinic")]
-        public ActionResult DeleteDoctorPolyclinic(
-            Guid DoctorId, Guid PolyclinicId)
+        [HttpPut("DeleteDoctorPolyclinic")]
+        public ActionResult DeleteDoctorPolyclinic(DoctorPolyclinic request)
         {
-            var dbDoctor = _doctorService.GetDoctor(DoctorId);
+            var dbDoctor = _doctorService.GetDoctor(request.IdD);
             if (dbDoctor == null)
                 return BadRequest("Доктор не найден.");
 
-            var dbPolyclinic = _polyclinicService.GetPolyclinic(PolyclinicId);
+            var dbPolyclinic = _polyclinicService.GetPolyclinic(request.IdP);
             if (dbPolyclinic == null)
                 return BadRequest("Поликлиника не найдена.");
 
